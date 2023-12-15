@@ -1558,6 +1558,13 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 }
 EXPORT_SYMBOL_GPL(kvm_cpuid);
 
+//For 0x4ffffffc
+u32 total_exits = 0;
+EXPORT_SYMBOL(total_exits);
+//For 0x4ffffffd
+u64 exit_processing_times[76];
+EXPORT_SYMBOL(exit_processing_times);
+
 int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 {
 	u32 eax, ebx, ecx, edx;
@@ -1567,7 +1574,44 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-	kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
+	
+	//Assignment Changes
+	if (eax == 0x4FFFFFFF) {
+	                eax = total_exits;
+	                ebx = 0;
+	                ecx = 0;
+	                edx = 0;
+	                printk(KERN_INFO "0x4FFFFFFF Total Exits = %d", total_exits);
+	} else if(eax == 0x4FFFFFFD || eax == 0x4FFFFFFC) {
+                if(ecx < 0 || ecx == 35 || ecx == 38 || ecx == 42 || ecx == 71 || ecx > 75) {
+                        printk(KERN_INFO "NOT DEFINED IN SDM");
+                        eax = 0;
+                        ebx = 0;
+                        ecx = 0;
+                        edx = 0xffffffff;
+                } else if(ecx == 3 || ecx == 4 || ecx == 5 || ecx == 6 || ecx == 11 || ecx == 16 || ecx == 17 || ecx ==28 || ecx ==29 || ecx ==33 || ecx ==34 || ecx == 51 || ecx == 63 || ecx == 64 || ecx == 65 || ecx == 66 || ecx == 67 || ecx == 68 || ecx == 69 || ecx == 70 || ecx ==72 || ecx == 73 || ecx == 75){
+                        eax = 0;
+                        ebx = 0;
+                        ecx = 0;
+                        edx = 0;
+                } else {
+                	if(eax == 0x4FFFFFFC) {
+                                printk(KERN_INFO "EXIT NUMBER: %d", ecx);
+                                u64 exit_time = exit_processing_times[ecx];
+                                u32 low_32_bits = (u32)exit_time;
+                                u32 high_32_bits = exit_time >> 32;
+                                eax = 0;
+                                ebx = high_32_bits;
+                                ecx = low_32_bits;
+                                edx = 0;
+                                printk(KERN_INFO "0x4FFFFFFC TOTAL EXIT=%d, PROCESSING TIME= %llu",ecx,exit_time);
+
+                        }
+                }
+        } else {
+		kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
+	} 
+
 	kvm_rax_write(vcpu, eax);
 	kvm_rbx_write(vcpu, ebx);
 	kvm_rcx_write(vcpu, ecx);

@@ -329,24 +329,24 @@ Difference is 11,53,939
 4. Of the exit types defined in the SDM, which are the most frequent? Least?
 
 ``` 
-Most frequent 
-Exit : 0   Exception or non-maskable interrupt (NMI)<br />
-Exit : 1   External interrupt<br />
-Exit : 7   Interrupt window<br />
-Exit : 10  CPUID <br />
-Exit : 12  HLT<br />
-Exit : 28  Control-register accesses<br />
-Exit : 30  I/O instruction<br />
-Exit : 31  RDMSR<br />
-Exit : 32  WRMSR<br />
-Exit : 48  EPT violation<br />
-Exit : 49  EPT misconfiguration<br />
+Most frequent:
+Exit : 0   Exception or non-maskable interrupt (NMI)
+Exit : 1   External interrupt
+Exit : 7   Interrupt window
+Exit : 10  CPUID 
+Exit : 12  HLT
+Exit : 28  Control-register accesses
+Exit : 30  I/O instruction
+Exit : 31  RDMSR
+Exit : 32  WRMSR
+Exit : 48  EPT violation
+Exit : 49  EPT misconfiguration
 
-Least frequent<br />
-Exit : 29   MOV DR<br />
-Exit : 46   Access to GDTR or IDTR. <br />
-Exit : 54   WBINVD or WBNOINVD<br />
-Exit : 55   XSETBV<br />
+Least frequent:
+Exit : 29   MOV DR
+Exit : 46   Access to GDTR or IDTR.
+Exit : 54   WBINVD or WBNOINVD
+Exit : 55   XSETBV
 
-Rest of the exits did not occur.<br />
+Rest of the exits did not occur.
 ```
