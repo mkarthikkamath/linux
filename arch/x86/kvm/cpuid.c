@@ -1565,6 +1565,12 @@ EXPORT_SYMBOL(total_exits);
 u64 exit_processing_times[76];
 EXPORT_SYMBOL(exit_processing_times);
 
+u64 total_time_processing_exits = 0;
+EXPORT_SYMBOL(total_time_processing_exits);
+
+u64 exit_counts[76];
+EXPORT_SYMBOL(exit_counts);
+
 int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 {
 	u32 eax, ebx, ecx, edx;
@@ -1582,6 +1588,14 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 	                ecx = 0;
 	                edx = 0;
 	                printk(KERN_INFO "0x4FFFFFFF Total Exits = %d", total_exits);
+	} else if(eax == 0x4FFFFFFE) {
+                printk(KERN_INFO "0x4FFFFFFE Total time processing all exits = %llu",total_time_processing_exits);
+                u32 low_32_bits = (u32)total_time_processing_exits;
+                u32 high_32_bits = total_time_processing_exits >> 32;
+                eax = 0;
+                ebx = high_32_bits;
+                ecx = low_32_bits;
+                edx = 0;
 	} else if(eax == 0x4FFFFFFD || eax == 0x4FFFFFFC) {
                 if(ecx < 0 || ecx == 35 || ecx == 38 || ecx == 42 || ecx == 71 || ecx > 75) {
                         printk(KERN_INFO "NOT DEFINED IN SDM");
@@ -1595,7 +1609,21 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
                         ecx = 0;
                         edx = 0;
                 } else {
-                	if(eax == 0x4FFFFFFC) {
+                	if(eax == 0x4FFFFFFD) {
+                                eax = exit_counts[ecx];
+                                printk(KERN_INFO "0x4FFFFFFD EXIT NUMBER: %d, TOTAL EXITS: %d",ecx, eax);
+                                ebx = 0;
+                                ecx = 0;
+                                edx = 0;
+                                printk(KERN_INFO "0x4FFFFFFD EXIT NUMBER: %d, TOTAL EXITS: %d",ecx, eax);
+                                ebx = 0;
+                                ecx = 0;
+                                edx = 0;
+                                for (int i = 0; i <= 75; i++) {
+                                        printk(KERN_INFO "EXIT #%d, TOTAL EXITS: %lld", i, exit_counts[i]);
+                                }
+     			}
+                	else if(eax == 0x4FFFFFFC) {
                                 printk(KERN_INFO "EXIT NUMBER: %d", ecx);
                                 u64 exit_time = exit_processing_times[ecx];
                                 u32 low_32_bits = (u32)exit_time;
