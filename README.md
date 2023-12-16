@@ -1,6 +1,6 @@
 # CMPE283 : Virtualization<br />
 
-## Assignment 1: Discovering VMX Features<br />
+## Assignment #1 Discovering VMX Features<br />
 
 • Read the VMX configuration MSRs to ascertain support capabilities/features
 Entry / Exit / Procbased / Secondary Procbased / Pinbased controls<br />
@@ -41,7 +41,7 @@ VM Disc Image: ubuntu-22.04.3-desktop-amd64<br />
 
 #### Steps to create a Linux kernel module that will query various MSRs to determine virtualization features available in your CPU<br />
 
-1) Fork the official ![Linux Kernal Source](https://github.com/torvalds/linux) code into your github repository:
+1) Fork the official [Linux Kernal Source](https://github.com/torvalds/linux) code into your github repository:
 
 2) Install VMware Workstation 17 Player on host OS. (Install VM fusion if you are using Mac as Host OS)<br />
 
@@ -148,3 +148,205 @@ Secondary Proc Based controls
 Entry and Exit Based controls
 ![alt text](https://github.com/mkarthikkamath/linux/blob/master/cmpe283/Assignment%201/Entry%20and%20Exit%20Controls.png?raw=true)
 
+
+
+## Assignment #2 (0x4FFFFFFF) & (0x4FFFFFFE)<br />
+
+### Answer 1
+
+#### Team Cahill
+
+##### Team Members:<br />
+
+• Mohith Girigowdara Girish (017090736)<br />
+	- Setting up Virtual machine<br />
+	- Code changes in cpuid.c and vmx.c.<br />
+	- Building the code changes. <br />
+	- Debugging the build issues.<br />
+
+• Miyar Karthik Kamath (017449133)<br />
+	- Understanding the usage of int, atomic variables and u32, u64 etc<br />
+	- Installing nested machine and implemented test cases.<br />
+	- Debugging issues while installing nested virtual machine.<br />
+
+
+### Answer 2
+
+#### Part 1:<br />
+
+For CPUID leaf node %eax=0x4FFFFFFF:
+Return the total number of exits (all types) in %eax
+
+#### Part 2:<br />
+
+For CPUID leaf node %eax=0x4FFFFFFE:
+Return the high 32 bits of the total time spent processing all exits in %ebx
+Return the low 32 bits of the total time spent processing all exits in %ecx
+%ebx and %ecx return values are measured in processor cycles, across all VCPUs
+
+> Configuration done in Assignment 1 is required to proceed with assignment 2.
+
+Do the code changes in cpuid.c and vmx.c 
+
+Path :
+
+```bash
+$ /linux/arch/x86/kvm/cpuid.c 
+$ /linux/arch/x86/kvm/vmx/vmx.c
+```
+
+Run the below commands in order
+
+```bash
+$ sudo make modules
+$ sudo make INSTALL_MOD_STRIP=1 modules_install 
+$ sudo make install
+```
+
+To check for KVM (Kernel-based Virtual Machine), run the below command
+
+```bash
+$ lsmod | grep kvm
+```
+If you find "kvm_intel" and "kvm", remove them using the below commands
+
+```bash
+$ sudo rmmod kvm_intel 
+$ sudo rmmod kvm
+```
+
+Verify the removal
+
+```bash
+$ lsmod | grep kvm
+```
+
+To explicitly load the KVM modules, run the below commands
+
+```bash
+$ sudo modprobe kvm
+$ sudo modprobe kvm_intel
+```
+
+Reboot the VM
+
+```bash
+$ sudo reboot
+```
+
+#### Steps to test 
+
+-Set up an VM inside the host machine to test the changes.
+
+-Install the following virtinst, libvirt-clients, virt-top, qemu-kvm, libvirt-daemon, libvirt-daemon-systems,  virt-manager, bridge-utils
+
+```bash
+$ sudo apt-get install virtinst libvirt-clients virt-top qemu-kvm libvirt-daemon libvirt-daemon-systems virt-manager bridge-utils
+```
+
+-Run the following command 
+
+```bash
+$ sudo virt-manager
+```
+
+- Download ubuntu-22.04.3-desktop-amd64 
+- Start Virtual Machine Manager and install Ubuntu. 
+- Once the inner VM is started run the below commands in the inner VM
+
+```bash
+$ sudo apt install cpuid
+```
+
+-Run below to get output of part 1:<br />
+
+```bash
+$ cpuid -l 0x4FFFFFFF
+```
+
+-Run below to get output of part 2: <br />
+
+```bash
+$ cpuid -l 0x4FFFFFFE
+```
+
+
+
+## Assignment #3 (0x4FFFFFFC) & (0x4FFFFFFD)<br />
+
+### Answer 1: 
+
+#### Team Cahill
+
+1. ##### Team Members:<br />
+
+```
+Same as Assignment #2
+```
+
+### Answer 2
+
+2. Steps to be followed
+
+```
+Repeat the steps from assignment 2 to build the changes.
+```
+
+#### Part 1: <br />
+For CPUID leaf node %eax=0x4FFFFFFD:
+Return the number of exits for the exit number provided (on input) in %ecx
+This value should be returned in %eax 
+
+#### Part 2: <br />
+For CPUID leaf node %eax=0x4FFFFFFC:
+Return the time spent processing the exit number provided (on input) in %ecx
+Return the high 32 bits of the total time spent for that exit in %ebx
+
+### Answer 3
+
+3. Comment on the frequency of exits – does the number of exits increase at a stable rate? Or are there 
+more exits performed during certain VM operations? Approximately how many exits does a full VM 
+boot entail?
+
+```
+Frequency of some exits have increased, while some remain almost same.
+
+Exit 0 (Exception or non-maskable interrupt) does not show any notable difference (Changed from 8919 to 8945) but Exit 1(External interrupt) almost doubles (From 27140 to 56295). I opened firefox and searched for some terms in the inner VM to note the difference in number of exits. 46 (Access to GDTR or IDTR), 48 (EPT violation) 49 (EPT misconfiguration) have increased a lot, where as reason code 28 to 32 does not show any much difference. Most of the other exit code shows 0, that is exit did not occur at all.
+
+The total number of exits on inner VM reboot,  as follows 
+
+Before count
+001f17e3 = 2037731 decimal 
+
+After count
+0030b376 = 3191670 decimal
+
+Difference is 11,53,939
+``` 
+
+### Answer 4
+
+4. Of the exit types defined in the SDM, which are the most frequent? Least?
+
+``` 
+Most frequent 
+Exit : 0   Exception or non-maskable interrupt (NMI)<br />
+Exit : 1   External interrupt<br />
+Exit : 7   Interrupt window<br />
+Exit : 10  CPUID <br />
+Exit : 12  HLT<br />
+Exit : 28  Control-register accesses<br />
+Exit : 30  I/O instruction<br />
+Exit : 31  RDMSR<br />
+Exit : 32  WRMSR<br />
+Exit : 48  EPT violation<br />
+Exit : 49  EPT misconfiguration<br />
+
+Least frequent<br />
+Exit : 29   MOV DR<br />
+Exit : 46   Access to GDTR or IDTR. <br />
+Exit : 54   WBINVD or WBNOINVD<br />
+Exit : 55   XSETBV<br />
+
+Rest of the exits did not occur.<br />
+```
