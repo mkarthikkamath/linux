@@ -32,7 +32,6 @@ via printk(..), including if the value can be set or cleared.<br />
 
 #### Specifications:<br />
 
-#####System Configurations<br />
 Host OS: Windows 11 Home x64 based processor<br />
 RAM: 12GB <br />
 Processor: Intel(R) Core(TM) i7-8550U CPU @1.80GHz 1.99 GHz<br />
@@ -190,9 +189,9 @@ Do the code changes in cpuid.c and vmx.c
 
 Path :
 
-```bash
-$ /linux/arch/x86/kvm/cpuid.c 
-$ /linux/arch/x86/kvm/vmx/vmx.c
+```
+/linux/arch/x86/kvm/cpuid.c 
+/linux/arch/x86/kvm/vmx/vmx.c
 ```
 
 Run the below commands in order
